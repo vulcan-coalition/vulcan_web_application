@@ -1,0 +1,2 @@
+build
+twine upload dist/*
