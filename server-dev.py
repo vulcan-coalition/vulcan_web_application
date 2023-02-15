@@ -24,3 +24,4 @@ async def startup_event():
 @app.on_event("shutdown")
 def shutdown_event():
     print("App is exiting.", "Wait a moment until completely exits.")
+    terminate()
