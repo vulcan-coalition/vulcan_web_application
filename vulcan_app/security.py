@@ -102,25 +102,6 @@ class Token(BaseModel):
     token_type: str
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
-
-async def check_is_admin(token: str = Depends(oauth2_scheme)):
-
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("email")
-        exp = payload.get("exp")
-        data = payload.get("data")
-        expired = datetime.now() > datetime.fromtimestamp(exp)
-        if email is None or expired or data is None:
-            raise credentials_exception
-    except jwt.DecodeError:
-        raise credentials_exception
-
-    return True
-
-
 def initialize(app):
 
     @app.post("/exchange", response_model=Token)
@@ -162,3 +143,22 @@ def initialize(app):
             userdata["data"] = True
 
         return create_tokens(userdata)
+
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+
+async def check_is_admin(token: str = Depends(oauth2_scheme)):
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("email")
+        exp = payload.get("exp")
+        data = payload.get("data")
+        expired = datetime.now() > datetime.fromtimestamp(exp)
+        if email is None or expired or data is None:
+            raise credentials_exception
+    except jwt.DecodeError:
+        raise credentials_exception
+
+    return True

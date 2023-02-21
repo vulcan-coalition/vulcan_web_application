@@ -14,11 +14,17 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 app = FastAPI()
 
+initialize(dir_path, app)
+
+
+@app.get("/session")
+async def get_session(current_user: User = Depends(get_active_current_user)):
+    return True
+
 
 @app.on_event("startup")
 async def startup_event():
     print("App is starting up.")
-    initialize(dir_path, app)
 
 
 @app.on_event("shutdown")
