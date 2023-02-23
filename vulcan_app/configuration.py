@@ -30,11 +30,12 @@ def get_config_object():
 
 
 def initialize(project_root):
-    config_file_path = os.path.join("project_root", "configurations", "config.json")
+    config_file_path = os.path.join(project_root, "configurations", "config.json")
 
     if os.path.exists(config_file_path):
         config_object.load(config_file_path)
 
 
 if __name__ == '__main__':
-    print(get_config("test"))
+    initialize(os.path.join(".."))
+    print(get_config("data_path"))
