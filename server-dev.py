@@ -25,6 +25,7 @@ async def get_session(current_user: User = Depends(get_active_current_user)):
 @app.on_event("startup")
 async def startup_event():
     print("App is starting up.")
+    database.get_session()
 
 
 @app.on_event("shutdown")
