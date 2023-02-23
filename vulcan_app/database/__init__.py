@@ -33,7 +33,13 @@ def initialize(config, override_address=None, override_port=None):
         database = Mongo(url, table)
 
 
+def get_database():
+    # for mongo
+    return database
+
+
 def get_session():
+    # for postgres
     return database.get_session()
 
 
