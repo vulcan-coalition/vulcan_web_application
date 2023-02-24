@@ -8,7 +8,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="vulcan-app",
-    version="0.5",
+    version="0.9",
     author="Chatavut Viriyasuthee",
     author_email="chatavut@lab.ai",
     description="Vulcan's web application server.",
@@ -26,6 +26,7 @@ setup(
     install_requires=[
         "aiofiles",
         "fastapi",
+        "httpx==0.23.3",
         "pydantic",
         "PyJWT",
         "pytz",
@@ -38,6 +39,6 @@ setup(
         "asyncpg",
         "shortuuid",
         "python-multipart",
-        "uvicorn"
+        "sshtunnel==0.4.0"
     ]
 )
