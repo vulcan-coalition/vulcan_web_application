@@ -8,17 +8,15 @@ from .configuration import get_config
 from .services import *
 
 
-bypass_security = get_config("test")
-
 # to get a string like this run:
 # openssl rand -hex 32
-SECRET_KEY = get_config("secret_key")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 24 * 60
 REFRESH_TOKEN_EXPIRE_MINUTES = 24 * 60 * 5
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = timedelta(minutes=15)):
+    SECRET_KEY = get_config("secret_key")
     expire = datetime.utcnow() + expires_delta
     to_encode = data.copy()
     to_encode.update({"exp": expire})
@@ -54,6 +52,7 @@ credentials_exception = HTTPException(
 
 
 def decode_token(token: str):
+    SECRET_KEY = get_config("secret_key")
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("email")
@@ -77,7 +76,7 @@ def decode_token(token: str):
 
 
 async def get_active_current_user(Authorization: str = Header(None)):
-
+    bypass_security = get_config("test")
     if Authorization is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -106,7 +105,7 @@ def initialize(app):
 
     @app.post("/exchange", response_model=Token)
     async def exchange_access_token(token: str = Form(...)):
-
+        bypass_security = get_config("test")
         if bypass_security:
             userdata = {'email': "testuser@vulcan", 'disability': 0}
         else:
@@ -129,7 +128,7 @@ def initialize(app):
 
     @app.post("/token", response_model=Token)
     async def login_for_admin_token(form_data: OAuth2PasswordRequestForm = Depends()):
-
+        bypass_security = get_config("test")
         if bypass_security:
             userdata = {'email': "testuser@vulcan", 'data': True}
         else:
@@ -149,7 +148,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 async def check_is_admin(token: str = Depends(oauth2_scheme)):
-
+    SECRET_KEY = get_config("secret_key")
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("email")
