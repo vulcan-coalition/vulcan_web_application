@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException, status, Form, Header
+from fastapi import Depends, HTTPException, status, Form, Header, APIRouter
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from typing import Optional
 import jwt
@@ -75,35 +75,17 @@ def decode_token(token: str):
     return email, disability
 
 
-async def get_active_current_user(Authorization: str = Header(None)):
-    bypass_security = get_config("test")
-    if Authorization is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token is missing.",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    token = Authorization[len("Bearer "):]
-
-    if bypass_security:
-        return User(email="testuser@vulcan", disability=0)
-
-    email, disability = decode_token(token)
-
-    user = User(email=email, disability=disability)
-    return user
-
-
 class Token(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str
 
 
-def initialize(app):
+def initialize(app, security_prefix=""):
 
-    @app.post("/exchange", response_model=Token)
+    router = APIRouter(prefix=security_prefix, tags=[security_prefix[1:] if security_prefix.startswith("/") else security_prefix])
+
+    @router.post("/exchange", response_model=Token)
     async def exchange_access_token(token: str = Form(...)):
         bypass_security = get_config("test")
         if bypass_security:
@@ -119,14 +101,14 @@ def initialize(app):
 
         return create_tokens(userdata)
 
-    @app.post('/refresh', response_model=Token)
+    @router.post('/refresh', response_model=Token)
     async def refresh_token(refresher: str = Form(...)):
 
         email, disability = decode_token(refresher)
 
         return create_tokens({"email": email, "disability": disability})
 
-    @app.post("/token", response_model=Token)
+    @router.post("/token", response_model=Token)
     async def login_for_admin_token(form_data: OAuth2PasswordRequestForm = Depends()):
         bypass_security = get_config("test")
         if bypass_security:
@@ -143,21 +125,42 @@ def initialize(app):
 
         return create_tokens(userdata)
 
+    app.include_router(router)
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+    async def get_active_current_user(Authorization: str = Header(None)):
+        bypass_security = get_config("test")
+        if Authorization is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token is missing.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
+        token = Authorization[len("Bearer "):]
 
-async def check_is_admin(token: str = Depends(oauth2_scheme)):
-    SECRET_KEY = get_config("secret_key")
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("email")
-        exp = payload.get("exp")
-        data = payload.get("data")
-        expired = datetime.now() > datetime.fromtimestamp(exp)
-        if email is None or expired or data is None:
+        if bypass_security:
+            return User(email="testuser@vulcan", disability=0)
+
+        email, disability = decode_token(token)
+
+        user = User(email=email, disability=disability)
+        return user
+
+    oauth2_scheme = OAuth2PasswordBearer(tokenUrl=security_prefix + "/token")
+
+    async def check_is_admin(token: str = Depends(oauth2_scheme)):
+        SECRET_KEY = get_config("secret_key")
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            email: str = payload.get("email")
+            exp = payload.get("exp")
+            data = payload.get("data")
+            expired = datetime.now() > datetime.fromtimestamp(exp)
+            if email is None or expired or data is None:
+                raise credentials_exception
+        except jwt.DecodeError:
             raise credentials_exception
-    except jwt.DecodeError:
-        raise credentials_exception
 
-    return True
+        return True
+
+    return get_active_current_user, check_is_admin

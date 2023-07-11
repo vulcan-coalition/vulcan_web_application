@@ -14,11 +14,16 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 app = FastAPI()
 
-initialize(dir_path, app)
+get_active_current_user, is_admin = initialize(dir_path, app, "/admin/test")
 
 
 @app.get("/session")
 async def get_session(current_user: User = Depends(get_active_current_user)):
+    return True
+
+
+@app.get("/session/admin")
+async def get_admin_session(current_user: User = Depends(is_admin)):
     return True
 
 
