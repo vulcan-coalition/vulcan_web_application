@@ -4,10 +4,12 @@ from .services import *
 from .database import initialize as init_db, terminate_connections, Base, TimeStamp
 
 
-def initialize(project_root, fast_api_app, security_prefix=""):
+def initialize(project_root, fast_api_app=None, security_prefix=""):
     init_config(project_root)
     init_db(configuration.get_config_object())
-    return init_security(fast_api_app, security_prefix)
+    if fast_api_app is not None:
+        return init_security(fast_api_app, security_prefix)
+    return None
 
 
 def terminate():
