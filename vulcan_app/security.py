@@ -163,4 +163,19 @@ def initialize(app, security_prefix=""):
 
         return True
 
-    return get_active_current_user, check_is_admin
+    async def get_admin(token: str = Depends(oauth2_scheme)):
+        SECRET_KEY = get_config("secret_key")
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            email: str = payload.get("email")
+            exp = payload.get("exp")
+            data = payload.get("data")
+            expired = datetime.now() > datetime.fromtimestamp(exp)
+            if email is None or expired or data is None:
+                raise credentials_exception
+        except jwt.DecodeError:
+            raise credentials_exception
+
+        return User(email=email, disability=0)
+
+    return get_active_current_user, check_is_admin, get_admin
