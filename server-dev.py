@@ -14,7 +14,15 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 app = FastAPI()
 
-get_active_current_user, is_admin = initialize(dir_path, app, "/admin/test")
+
+async def get_user(username, pwd):
+    print("Perform verification for ", username, "with", pwd)
+    return True, {
+        'email': "testuser@vulcan"
+    }
+
+
+get_active_current_user, is_admin, get_admin = initialize(dir_path, app, "/admin/test", get_user)
 
 
 @app.get("/session")

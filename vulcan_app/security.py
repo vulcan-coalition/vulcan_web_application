@@ -81,12 +81,15 @@ class Token(BaseModel):
     token_type: str
 
 
-def initialize(app, security_prefix=""):
+def initialize(app, security_prefix="", get_user=None):
 
     router = APIRouter(prefix=security_prefix, tags=[security_prefix[1:] if security_prefix.startswith("/") else security_prefix])
 
     @router.post("/exchange", response_model=Token)
     async def exchange_access_token(token: str = Form(...)):
+        """
+            Login as a collab user
+        """
         bypass_security = get_config("test")
         if bypass_security:
             userdata = {'email': "testuser@vulcan", 'disability': 0}
@@ -109,10 +112,14 @@ def initialize(app, security_prefix=""):
         return create_tokens({"email": email, "disability": disability})
 
     @router.post("/token", response_model=Token)
+    @router.post("/admin", response_model=Token)
     async def login_for_admin_token(form_data: OAuth2PasswordRequestForm = Depends()):
+        """
+            Login as a value performanceManager
+        """
         bypass_security = get_config("test")
         if bypass_security:
-            userdata = {'email': "testuser@vulcan", 'data': True}
+            userdata = {'email': "testadmin@vulcan", 'data': True}
         else:
             result, userdata = await admin_login(form_data.username, form_data.password)
             if not result:
@@ -124,6 +131,25 @@ def initialize(app, security_prefix=""):
             userdata["data"] = True
 
         return create_tokens(userdata)
+
+    @router.post("/login", response_model=Token)
+    async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+        """
+            custom user login (required parameter get_user)
+        """
+        bypass_security = get_config("test")
+        if bypass_security:
+            userdata = {'email': "testuser@vulcan", 'data': False}
+        elif get_user is not None:
+            result, userdata = await get_user(form_data.username, form_data.password)
+            if result:
+                userdata["data"] = False
+                return create_tokens(userdata)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     app.include_router(router)
 
