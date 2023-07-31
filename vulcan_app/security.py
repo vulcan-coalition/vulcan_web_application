@@ -140,6 +140,7 @@ def initialize(app, security_prefix="", get_user=None):
         bypass_security = get_config("test")
         if bypass_security:
             userdata = {'email': "testuser@vulcan", 'data': False}
+            return create_tokens(userdata)
         elif get_user is not None:
             result, userdata = await get_user(form_data.username, form_data.password)
             if result:
