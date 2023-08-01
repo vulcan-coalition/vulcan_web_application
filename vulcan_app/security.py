@@ -94,7 +94,7 @@ def initialize(app, security_prefix="", get_user=None):
         if bypass_security:
             userdata = {'email': "testuser@vulcan", 'disability': 0}
         else:
-            result, userdata = await login(token)
+            result, userdata = await login_linkage(token)
             if not result:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,

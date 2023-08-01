@@ -4,7 +4,7 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
-async def login(token: str):
+async def login_linkage(token: str):
     address = get_config("authentication_service_address")
     if address:
         headers = {
