@@ -45,3 +45,8 @@ async def startup_event():
 def shutdown_event():
     print("App is exiting.", "Wait a moment until completely exits.")
     terminate()
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="localhost", port=8000)

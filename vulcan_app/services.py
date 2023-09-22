@@ -1,11 +1,11 @@
 import requests
-from .configuration import get_config
 from datetime import datetime
 from pydantic import BaseModel
+import os
 
 
 async def login_linkage(token: str):
-    address = get_config("authentication_service_address")
+    address = os.getenv("VULCAN_APP_SERVICE_AUTHENTICATION")
     if address:
         headers = {
             "Authorization": "Bearer " + token
@@ -22,8 +22,8 @@ async def login_linkage(token: str):
 
 
 async def admin_login(username: str, password: str):
-    login_address = get_config("admin_authentication_service_address")
-    user_address = get_config("admin_verify_service_address")
+    login_address = os.getenv("VULCAN_APP_SERVICE_AUTHENTICATION_ADMIN")
+    user_address = os.getenv("VULCAN_APP_SERVICE_USER_DATA")
     if login_address and user_address:
 
         r = requests.post(login_address, data={'username': username, 'password': password})
@@ -64,7 +64,7 @@ class Worklog(BaseModel):
 
 
 async def log_all(worklogs):
-    address = get_config('logging_service_address')
+    address = os.getenv("VULCAN_APP_SERVICE_LOGGING")
     if address:
         response = requests.post(address, json=[w.serialize() for w in worklogs])
         try:

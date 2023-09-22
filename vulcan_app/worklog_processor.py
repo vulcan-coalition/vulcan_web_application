@@ -1,10 +1,10 @@
 import os
-from configuration import get_config
 import threading
 from datetime import datetime, timedelta
 import time
 import record
 from services import Worklog, log_all
+import os
 
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -12,7 +12,7 @@ artifacts_path = os.path.join(dir_path, "..", "artifacts")
 
 
 async def execute_update(from_time, to_time):
-    app_id = get_config("log_app_name")
+    app_id = os.getenv("VULCAN_APP_ID")
     records = await record.get_latest_answers(from_time=from_time, to_time=to_time)
     # records are Pydantic object not json object
 

@@ -1,10 +1,10 @@
+import os
 from fastapi import Depends, HTTPException, status, Form, Header, APIRouter
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from typing import Optional
 import jwt
 from pydantic import BaseModel
 from datetime import datetime, timedelta
-from .configuration import get_config
 from .services import *
 
 
@@ -12,15 +12,14 @@ from .services import *
 # openssl rand -hex 32
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 24 * 60
-REFRESH_TOKEN_EXPIRE_MINUTES = 24 * 60 * 5
+REFRESH_TOKEN_EXPIRE_MINUTES = 24 * 60 * 14
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = timedelta(minutes=15)):
-    SECRET_KEY = get_config("secret_key")
     expire = datetime.utcnow() + expires_delta
     to_encode = data.copy()
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, os.getenv("VULCAN_APP_SECRET_KEY"), algorithm=ALGORITHM)
     return encoded_jwt
 
 
@@ -52,9 +51,8 @@ credentials_exception = HTTPException(
 
 
 def decode_token(token: str):
-    SECRET_KEY = get_config("secret_key")
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, os.getenv("VULCAN_APP_SECRET_KEY"), algorithms=[ALGORITHM])
         email: str = payload.get("email")
         exp = payload.get("exp")
         disability = payload.get("disability")
@@ -90,7 +88,7 @@ def initialize(app, security_prefix="", get_user=None):
         """
             Login as a collab user
         """
-        bypass_security = get_config("test")
+        bypass_security = os.getenv("VULCAN_APP_MODE_TEST") == "True"
         if bypass_security:
             userdata = {'email': "testuser@vulcan", 'disability': 0}
         else:
@@ -117,7 +115,7 @@ def initialize(app, security_prefix="", get_user=None):
         """
             Login as a value performanceManager
         """
-        bypass_security = get_config("test")
+        bypass_security = os.getenv("VULCAN_APP_MODE_TEST") == "True"
         if bypass_security:
             userdata = {'email': "testadmin@vulcan", 'data': True}
         else:
@@ -137,7 +135,7 @@ def initialize(app, security_prefix="", get_user=None):
         """
             custom user login (required parameter get_user)
         """
-        bypass_security = get_config("test")
+        bypass_security = os.getenv("VULCAN_APP_MODE_TEST") == "True"
         if bypass_security:
             userdata = {'email': "testuser@vulcan", 'data': False}
             return create_tokens(userdata)
@@ -155,7 +153,7 @@ def initialize(app, security_prefix="", get_user=None):
     app.include_router(router)
 
     async def get_active_current_user(Authorization: str = Header(None)):
-        bypass_security = get_config("test")
+        bypass_security = os.getenv("VULCAN_APP_MODE_TEST") == "True"
         if Authorization is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -176,9 +174,8 @@ def initialize(app, security_prefix="", get_user=None):
     oauth2_scheme = OAuth2PasswordBearer(tokenUrl=security_prefix + "/token")
 
     async def check_is_admin(token: str = Depends(oauth2_scheme)):
-        SECRET_KEY = get_config("secret_key")
         try:
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            payload = jwt.decode(token, os.getenv("VULCAN_APP_SECRET_KEY"), algorithms=[ALGORITHM])
             email: str = payload.get("email")
             exp = payload.get("exp")
             data = payload.get("data")
@@ -191,9 +188,8 @@ def initialize(app, security_prefix="", get_user=None):
         return True
 
     async def get_admin(token: str = Depends(oauth2_scheme)):
-        SECRET_KEY = get_config("secret_key")
         try:
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            payload = jwt.decode(token, os.getenv("VULCAN_APP_SECRET_KEY"), algorithms=[ALGORITHM])
             email: str = payload.get("email")
             exp = payload.get("exp")
             data = payload.get("data")

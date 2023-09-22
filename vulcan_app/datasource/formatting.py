@@ -6,7 +6,6 @@ import shutil
 import provision
 import csv
 from datetime import date
-from configuration import get_config
 
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -162,7 +161,7 @@ async def submit_analysis(drive_id, from_time=None):
 if __name__ == '__main__':
     gdrive.initialize()
     last_touch = provision.check()
-    g_list = gdrive.listFolder(get_config()["data_drive_id"], "Data for Labeling/" + last_touch)
+    g_list = gdrive.listFolder(os.getenv("VULCAN_APP_GOOGLE_DRIVE"), "Data for Labeling/" + last_touch)
     print([x["title"] for x in g_list])
     submission_counter = 0
     for x in g_list:
